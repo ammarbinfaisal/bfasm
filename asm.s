@@ -173,7 +173,6 @@ compile:
     .emit_loop_start:
         ; save the location of the output buffer
         ; loop_start:
-        push rcx
         ; emit cmp byte [rbx], 0
         mov rsi, 0x3
         mov rdi, 0x0
@@ -187,6 +186,7 @@ compile:
         push rcx
         ; the offset will be filled in later
         add rcx, rax
+        push rcx
         jmp .incloop
     .emit_loop_end:
         ; emit cmp byte [rbx], 0
@@ -197,8 +197,8 @@ compile:
         ; emit jne <offset>
         mov rdi, 0x0
         mov rsi, 0x3
-        pop r12 ; r12 = location of the jne
         pop r13 ; r13 = location of the loop start
+        pop r12 ; r12 = location of the jne
         ; we have to jump to the location of the loop start
         ; loop_start - loop_end - sizeof(jmp)
         mov r14, rcx
