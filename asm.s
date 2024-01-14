@@ -19,17 +19,15 @@ main:
     syscall
 
     ; save the pointer to the allocated memory
-    mov r9, rax
+    mov rdx, rax
 
     ; xor rax rax
-    mov rdx, r9
     mov rcx, 0x0
     mov rsi, 0x0
     call emit_xor_reg
     add rcx, rax 
 
     ; add rax, 0x1
-    mov rdx, r9
     mov r11, rcx ; save the location of the add instruction so we can jump back to it
     mov rsi, 0x0
     mov rdi, 0x1
@@ -37,7 +35,6 @@ main:
     add rcx, rax
 
     ; cmp rax, 0x11
-    mov rdx, r9
     mov rsi, 0x0 ; 0 = rax
     mov rdi, 0x11
     call emit_cmp_reg_int
@@ -50,16 +47,15 @@ main:
     not r12      
     add r12, 0x1 ; two's complement
     mov edi, r12d 
-    mov rsi, r9  ; buffer
     call emit_jne
     add rcx, rax
 
     ; fill with nops then ret
     mov rax, 0x909090c3
-    mov [r9 + rcx], dword eax
+    mov [rdx + rcx], dword eax
 
     ; jump back to the start
-    call r9
+    call rdx
     leave
     ret
 
@@ -77,7 +73,7 @@ emit_xor_reg:
     mov rax, 3
     ret
 
-
+; faulty
 emit_mov_reg_int:
 ; rdi = int
 ; rsi = reg
@@ -85,12 +81,14 @@ emit_mov_reg_int:
 ; rcx = location
 ; rax = returned length of the encoded instruction
 ; will assemble mov <reg>, <int>
-    mov al, 0x48         ; 48 for rex.w, b8 for mov r64, imm64
-    mov [rdx + rcx], byte al
-    or sil, 0xb8                        ; (sil is the lower 8 bits of rsi)
-    mov [rdx + rcx + 1], byte sil       ; reg64
-    mov [rdx + rcx + 2], dword edi      ; imm32
-    mov rax, 6
+    ; 8B /r	MOV r32
+    mov [rdx + rcx], byte 0x48        ; 48 for rex.w, 
+    mov [rdx + rcx + 1], byte 0x8b    ; 8b for mov r/m64, imm32
+    mov al, 0xc0                      ; mod rm = 0xc0 | dst << 3 | src
+    or al, sil
+    mov [rdx + rcx + 2], byte al
+    mov [rdx + rcx + 3], dword edi    ; imm32
+    mov rax, 7
     ret
 
 emit_cmp_reg_int:
@@ -121,8 +119,8 @@ emit_jne:
 ; rax = returned length of the encoded instruction
 ; will assemble jne <offset>
     mov ax, 0x850f         ; 0f85 for jne
-    mov [rsi + rcx], word ax
-    mov [rsi + rcx + 2], dword edi           ; offset
+    mov [rdx + rcx], word ax
+    mov [rdx + rcx + 2], dword edi           ; offset
     mov rax,  6
     ret
 
