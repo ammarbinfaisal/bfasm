@@ -36,7 +36,7 @@ main:
     call emit_add_reg_int
     add rcx, rax
 
-    ; cmp rax, 0xdeadbeff
+    ; cmp rax, 0x11
     mov rdx, r9
     mov rsi, 0x0 ; 0 = rax
     mov rdi, 0x11
