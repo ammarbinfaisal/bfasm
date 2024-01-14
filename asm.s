@@ -46,9 +46,9 @@ main:
     ; jne 0x0 
     mov r12, rcx ; backup rcx
     sub r12, r11
-    add r12, 0x6
-    not r12
-    add r12, 0x1
+    add r12, 0x6 ; size of the jne instruction
+    not r12      
+    add r12, 0x1 ; two's complement
     mov edi, r12d 
     mov rsi, r9  ; buffer
     call emit_jne
