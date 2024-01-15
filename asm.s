@@ -1,4 +1,4 @@
-global main
+global _start
 
 section .data
     ; bf code
@@ -8,7 +8,7 @@ section .data
 
 section .text
 
-main:
+_start:
     ; save the pointer to the allocated memory
     push rbp
     mov rbp, rsp
@@ -48,11 +48,13 @@ main:
     mov rbx, cells
     ; execute the compiled code
     call rdx
-    mov rax, 0x0
-
-    leave
-    ret
     
+    ; exit 0
+    mov rax, 0x3c
+    mov rdi, 0x0
+    syscall
+    
+
 compile:
     ; input buffer
     ; r10 = input_buffer
