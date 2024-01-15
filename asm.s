@@ -222,11 +222,11 @@ compile:
         jmp .incloop
 
 emit_inc_reg:
-    ; rdi = reg
-    ; rsi = buffer
-    ; rdx = location
-    ; rax = returned length of the encoded instruction
-    ; will assemble inc <reg>
+; rdi = reg
+; rsi = buffer
+; rdx = location
+; rax = returned length of the encoded instruction
+; will assemble inc <reg>
     mov [rdx + rcx], byte 0xfe
     mov al, 0xc0
     or al, sil
@@ -236,12 +236,12 @@ emit_inc_reg:
 
 
 emit_dec_reg:
-    ; rdi = reg
-    ; rsi = buffer
-    ; rdx = location
-    ; rax = returned length of the encoded instruction
-    ; will assemble dec <reg>
-    ; FE /1	DEC r/m8	M	Valid	Valid	Decrement r/m8 by 1.
+; rdi = reg
+; rsi = buffer
+; rdx = location
+; rax = returned length of the encoded instruction
+; will assemble dec <reg>
+; FE /1	DEC r/m8	M	Valid	Valid	Decrement r/m8 by 1.
     mov [rdx + rcx], byte 0xfe
     mov al, 0xc8
     or al, sil
@@ -264,12 +264,12 @@ emit_xor_reg:
     ret
 
 emit_inc_val:
-    ; rdi = reg
-    ; rsi = buffer
-    ; rdx = location
-    ; rax = returned length of the encoded instruction
-    ; will assemble inc byte [reg]
-    ; REX + FE /0	INC r/m81	M	Valid	N.E.	Increment r/m byte by 1.
+; rdi = reg
+; rsi = buffer
+; rdx = location
+; rax = returned length of the encoded instruction
+; will assemble inc byte [reg]
+; REX + FE /0	INC r/m81	M	Valid	N.E.	Increment r/m byte by 1.
     mov [rdx + rcx], byte 0b01000000
     mov al, 0xfe
     mov [rdx + rcx + 1], byte al
@@ -282,12 +282,12 @@ emit_inc_val:
 
 
 emit_dec_val:
-    ; rdi = reg
-    ; rsi = buffer
-    ; rdx = location
-    ; rax = returned length of the encoded instruction
-    ; will assemble dec byte [reg]
-    ; REX + FE /1	DEC r/m8*	M	Valid	N.E.	Decrement r/m8 by 1.
+; rdi = reg
+; rsi = buffer
+; rdx = location
+; rax = returned length of the encoded instruction
+; will assemble dec byte [reg]
+; REX + FE /1	DEC r/m8*	M	Valid	N.E.	Decrement r/m8 by 1.
     mov [rdx + rcx], byte 0b01000000
     mov al, 0xfe
     mov [rdx + rcx + 1], byte al
