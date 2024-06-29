@@ -227,11 +227,12 @@ emit_inc_reg:
 ; rdx = location
 ; rax = returned length of the encoded instruction
 ; will assemble inc <reg>
-    mov [rcx], byte 0xfe
+    mov [rcx], byte 0x48
+    mov [rcx + 1], byte 0xff
     mov al, 0xc0
     or al, sil
-    mov [rcx + 1], byte al
-    mov rax, 2
+    mov [rcx + 2], byte al
+    mov rax, 3
     ret
 
 
@@ -241,12 +242,12 @@ emit_dec_reg:
 ; rdx = location
 ; rax = returned length of the encoded instruction
 ; will assemble dec <reg>
-; FE /1	DEC r/m8	M	Valid	Valid	Decrement r/m8 by 1.
-    mov [rcx], byte 0xfe
+    mov [rcx], byte 0x48
+    mov [rcx + 1], byte 0xff
     mov al, 0xc8
     or al, sil
-    mov [rcx + 1], byte al
-    mov rax, 2
+    mov [rcx + 2], byte al
+    mov rax, 3
     ret
 
 emit_xor_reg:
