@@ -62,35 +62,35 @@ compile:
     push rbp
     mov rbp, rsp
 
-    mov rcx, 0x0 ; rcx = location of the output buffer
-    mov r9, 0x0 ; rdx = location of the input buffer
+    mov rcx, rdx ; rcx = location of the output buffer
+    mov r9, input_buffer ; rdx = location of the input buffer
 
     .loop:
-        cmp byte [r10+r9], '>'
+        cmp byte [r9], '>'
         je .emit_inc_ptr
-        cmp byte [r10+r9], '<'
+        cmp byte [r9], '<'
         je .emit_dec_ptr
-        cmp byte [r10+r9], '+'
+        cmp byte [r9], '+'
         je .emit_inc_val
-        cmp byte [r10+r9], '-'
+        cmp byte [r9], '-'
         je .emit_dec_val
-        cmp byte [r10+r9], '.'
+        cmp byte [r9], '.'
         je .emit_print
-        cmp byte [r10+r9], ','
+        cmp byte [r9], ','
         je .emit_read
-        cmp byte [r10+r9], '['
+        cmp byte [r9], '['
         je .emit_loop_start
-        cmp byte [r10+r9], ']'
+        cmp byte [r9], ']'
         je .emit_loop_end
-        cmp byte [r10+r9], 0x0
+        cmp byte [r9], 0x0
         je .end
         jmp .incloop
     .incloop:
-        inc r9
+        add r9, 0x1
         jmp .loop
     .end:
         ; write a ret
-        mov byte [rdx+rcx], 0xc3
+        mov byte [rcx], 0xc3
         leave
         ret
     ; assemble the instruction
@@ -218,7 +218,7 @@ compile:
         mov r13, r12
         add r13, 4
         sub r14, r13
-        mov [rdx+r12], dword r14d
+        mov [r12], dword r14d
         jmp .incloop
 
 emit_inc_reg:
@@ -227,10 +227,10 @@ emit_inc_reg:
 ; rdx = location
 ; rax = returned length of the encoded instruction
 ; will assemble inc <reg>
-    mov [rdx + rcx], byte 0xfe
+    mov [rcx], byte 0xfe
     mov al, 0xc0
     or al, sil
-    mov [rdx + rcx + 1], byte al
+    mov [rcx + 1], byte al
     mov rax, 2
     ret
 
@@ -242,24 +242,24 @@ emit_dec_reg:
 ; rax = returned length of the encoded instruction
 ; will assemble dec <reg>
 ; FE /1	DEC r/m8	M	Valid	Valid	Decrement r/m8 by 1.
-    mov [rdx + rcx], byte 0xfe
+    mov [rcx], byte 0xfe
     mov al, 0xc8
     or al, sil
-    mov [rdx + rcx + 1], byte al
+    mov [rcx + 1], byte al
     mov rax, 2
     ret
 
 emit_xor_reg:
     mov al, 0x48
-    mov [rdx + rcx], byte al
+    mov [rcx], byte al
     mov al, 0x33
-    mov [rdx + rcx + 1], byte al
+    mov [rcx + 1], byte al
     ; modrm = 0xc0 | dst << 3 | src
     mov al, 0xc0
     or al, sil
     shl sil, 3
     or al, sil
-    mov [rdx + rcx + 2], byte al
+    mov [rcx + 2], byte al
     mov rax, 3
     ret
 
@@ -270,13 +270,13 @@ emit_inc_val:
 ; rax = returned length of the encoded instruction
 ; will assemble inc byte [reg]
 ; REX + FE /0	INC r/m81	M	Valid	N.E.	Increment r/m byte by 1.
-    mov [rdx + rcx], byte 0b01000000
+    mov [rcx], byte 0b01000000
     mov al, 0xfe
-    mov [rdx + rcx + 1], byte al
+    mov [rcx + 1], byte al
     ; modrm = 0x00 | dst << 3 | src
     mov al, 0x00
     or al, sil
-    mov [rdx + rcx + 2], byte al
+    mov [rcx + 2], byte al
     mov rax, 3
     ret
 
@@ -288,13 +288,13 @@ emit_dec_val:
 ; rax = returned length of the encoded instruction
 ; will assemble dec byte [reg]
 ; REX + FE /1	DEC r/m8*	M	Valid	N.E.	Decrement r/m8 by 1.
-    mov [rdx + rcx], byte 0b01000000
+    mov [rcx], byte 0b01000000
     mov al, 0xfe
-    mov [rdx + rcx + 1], byte al
+    mov [rcx + 1], byte al
     ; modrm = 0x08 | dst << 3 | src
     mov al, 0x08
     or al, sil
-    mov [rdx + rcx + 2], byte al
+    mov [rcx + 2], byte al
     mov rax, 3
     ret
 
@@ -305,12 +305,12 @@ emit_mov_reg_int:
 ; rcx = location
 ; rax = returned length of the encoded instruction
 ; will assemble mov <reg>, <int>
-    mov [rdx + rcx], byte 0xc7
+    mov [rcx], byte 0xc7
     ; mod rm = 0xc0 | dst << 3 | src
     mov al, 0xc0
     or al, sil
-    mov [rdx + rcx + 1], byte al
-    mov [rdx + rcx + 2], dword edi      ; imm32
+    mov [rcx + 1], byte al
+    mov [rcx + 2], dword edi      ; imm32
     mov rax, 6
     ret
 
@@ -321,15 +321,15 @@ emit_mov_reg_reg:
 ; rcx = location
 ; rax = returned length of the encoded instruction
 ; will assemble mov <reg>, <reg>
-    mov [rdx + rcx], byte 0x48
+    mov [rcx], byte 0x48
     mov al, 0x89
-    mov [rdx + rcx + 1], byte al
+    mov [rcx + 1], byte al
     ; mod rm = 0xc0 | dst << 3 | src
     mov al, 0b11000000
     or al, sil
     shl dil, 3
     or al, dil
-    mov [rdx + rcx + 2], byte al
+    mov [rcx + 2], byte al
     mov rax, 3
     ret
 
@@ -341,13 +341,13 @@ emit_mov_reg_mem:
 ; rcx = location
 ; rax = returned length of the encoded instruction
 ; will assemble mov <reg>, [<reg>]
-    mov [rdx + rcx], byte 0x48
+    mov [rcx], byte 0x48
     mov al, 0x8b
-    mov [rdx + rcx + 1], byte al
+    mov [rcx + 1], byte al
     ; mod rm = 0xc0 | dst << 3 | src
     shl dil, 3
     or sil, dil
-    mov [rdx + rcx + 2], byte sil
+    mov [rcx + 2], byte sil
     mov rax, 3
     ret
 
@@ -360,16 +360,16 @@ emit_cmp_reg_int:
 ; rax = returned length of the encoded instruction
 ; will assemble cmp <reg>, <int>
     mov al, 0x48         ; 48 for rex.w, 81 for cmp r/m64, imm32
-    mov [rdx + rcx], byte al
+    mov [rcx], byte al
     mov al, 0x81
-    mov [rdx + rcx + 1], byte al
+    mov [rcx + 1], byte al
     ; mod rm = 0xc0 | dst << 3 | src
     mov al, 0x7
     shl al, 3
     or al, 0xc0
     or al, sil
-    mov [rdx + rcx + 2], byte al
-    mov [rdx + rcx + 3], dword edi      ; imm32
+    mov [rcx + 2], byte al
+    mov [rcx + 3], dword edi      ; imm32
     mov rax, 7
     ret
 
@@ -381,11 +381,11 @@ emit_cmp_mem_int:
 ; rax = returned length of the encoded instruction
 ; will assemble cmp <reg>, <int>
     ; cmp byte [rbx], 0
-    mov [rdx + rcx], byte 0x80
+    mov [rcx], byte 0x80
     mov al, 0x38
     or al, sil
-    mov [rdx + rcx + 1], byte al
-    mov [rdx + rcx + 2], byte dil      ; imm8
+    mov [rcx + 1], byte al
+    mov [rcx + 2], byte dil      ; imm8
     mov rax, 3
     ret
 
@@ -396,8 +396,8 @@ emit_jmp:
 ; rax = returned length of the encoded instruction
 ; will assemble jmp <offset>
     mov al, 0xe9
-    mov [rdx + rcx], byte al
-    mov [rdx + rcx + 1], dword edi           ; offset
+    mov [rcx], byte al
+    mov [rcx + 1], dword edi           ; offset
     mov rax, 5
     ret
 
@@ -408,8 +408,8 @@ emit_jne:
 ; rax = returned length of the encoded instruction
 ; will assemble jne <offset>
     mov ax, 0x850f         ; 0f85 for jne
-    mov [rdx + rcx], word ax
-    mov [rdx + rcx + 2], dword edi           ; offset
+    mov [rcx], word ax
+    mov [rcx + 2], dword edi           ; offset
     mov rax,  6
     ret
 
@@ -420,8 +420,8 @@ emit_je:
 ; rax = returned length of the encoded instruction
 ; will assemble je <offset>
     mov ax, 0x840f         ; 0f84 for je
-    mov [rdx + rcx], word ax
-    mov [rdx + rcx + 2], dword edi           ; offset
+    mov [rcx], word ax
+    mov [rcx + 2], dword edi           ; offset
     mov rax,  6
     ret
 
@@ -433,14 +433,14 @@ emit_add_reg_int:
 ; rax = returned length of the encoded instruction
 ; will assemble add <reg>, <int>
     mov al, 0x48         ; 48 for rex.w, 81 for add r/m64, imm32
-    mov [rdx + rcx], byte al
+    mov [rcx], byte al
     mov al, 0x81
-    mov [rdx + rcx + 1], byte al
+    mov [rcx + 1], byte al
     ; mod rm = 0xc0 | dst << 3 | src
     mov al, 0xc0
     or al, sil
-    mov [rdx + rcx + 2], byte al
-    mov [rdx + rcx + 3], dword edi      ; imm32
+    mov [rcx + 2], byte al
+    mov [rcx + 3], dword edi      ; imm32
     mov rax, 7
     ret
 
@@ -450,7 +450,7 @@ emit_syscall:
 ; rax = returned length of the encoded instruction
 ; will assemble syscall
     mov ax, 0x050f         ; 0f05 for syscall
-    mov [rdx + rcx], word ax
+    mov [rcx], word ax
     mov rax,  2
     ret
  
